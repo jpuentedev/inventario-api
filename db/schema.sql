@@ -1,6 +1,4 @@
--- Esquema de la base de datos de inventario
-CREATE DATABASE IF NOT EXISTS inventario CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE inventario;
+-- Esquema de la base de datos de inventario (la base se crea en db/setup.js con DB_NAME)
 
 CREATE TABLE IF NOT EXISTS categories (
   id         INT AUTO_INCREMENT PRIMARY KEY,

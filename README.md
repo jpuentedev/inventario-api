@@ -1,5 +1,7 @@
 # Inventario API
 
+[![Tests](https://github.com/jpuentedev/inventario-api/actions/workflows/tests.yml/badge.svg)](https://github.com/jpuentedev/inventario-api/actions/workflows/tests.yml)
+
 API REST para gestionar inventario y ventas, construida con **Node.js**, **Express** y **MySQL**.
 
 ## Tecnologías
@@ -8,6 +10,7 @@ API REST para gestionar inventario y ventas, construida con **Node.js**, **Expre
 - MySQL 8 (driver `mysql2` con pool de conexiones)
 - JWT (`jsonwebtoken`) y `bcryptjs` para autenticación
 - Zod para validar datos de entrada
+- Jest + Supertest para pruebas de integración, en CI con GitHub Actions
 
 ## Instalación
 
@@ -19,6 +22,29 @@ npm run dev
 ```
 
 > Si cambia el esquema, `npm run db:reset` borra la base y la vuelve a crear.
+
+## Pruebas
+
+```bash
+npm test               # 52 pruebas de integración
+npm test -- --coverage # con reporte de cobertura
+```
+
+Las pruebas levantan la app con Supertest y usan una base MySQL real y separada
+(`inventario_test`), que se recrea antes de cada archivo; nunca tocan la base de desarrollo.
+Toman las credenciales de MySQL de `.env`.
+
+| Archivo | Qué cubre |
+| --- | --- |
+| `tests/auth.test.js` | Login, tokens inválidos, expirados o con otro secreto, gestión de usuarios y permisos |
+| `tests/products.test.js` | Listado, búsqueda, paginación, CRUD, validaciones, categorías y permisos del vendedor |
+| `tests/orders.test.js` | Ventas, rollback por stock insuficiente, precio histórico, cancelación, visibilidad por rol y concurrencia |
+
+Las pruebas de concurrencia lanzan 20 ventas simultáneas sobre 12 unidades (se aceptan exactamente 12)
+y ventas cruzadas en orden inverso para comprobar que no hay deadlocks.
+Cobertura actual: ~99 % de líneas.
+
+En cada push, GitHub Actions levanta un contenedor MySQL 8.4 y corre la suite completa.
 
 ## Autenticación y roles
 
@@ -83,5 +109,5 @@ Si un solo producto no alcanza, se hace rollback y nada cambia.
 - [x] Autenticación con JWT y roles (admin / vendedor)
 - [ ] Historial de movimientos de inventario
 - [ ] Reportes: productos más vendidos, stock bajo
-- [ ] Pruebas automatizadas (Jest + Supertest)
+- [x] Pruebas automatizadas (Jest + Supertest) con CI en GitHub Actions
 - [ ] Docker y despliegue
