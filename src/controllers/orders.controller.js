@@ -32,8 +32,17 @@ async function withTransaction(fn) {
   }
 }
 
+// Un vendedor solo puede ver sus propias ventas; un admin ve todas
+const ownerFilter = (user) => (user.role === 'admin' ? { sql: '', params: [] } : { sql: 'o.user_id = ?', params: [user.id] });
+
 async function findOrder(conn, id) {
-  const [[order]] = await conn.query('SELECT * FROM orders WHERE id = ?', [id]);
+  const [[order]] = await conn.query(
+    `SELECT o.*, u.name AS seller
+       FROM orders o
+       JOIN users u ON u.id = o.user_id
+      WHERE o.id = ?`,
+    [id]
+  );
   if (!order) return null;
   const [items] = await conn.query(
     `SELECT oi.product_id, p.sku, p.name, oi.quantity, oi.unit_price, oi.subtotal
@@ -80,7 +89,8 @@ export async function createOrder(req, res) {
     });
     const total = Math.round(lines.reduce((sum, l) => sum + l.subtotal, 0) * 100) / 100;
 
-    const [result] = await conn.query('INSERT INTO orders (customer_name, total) VALUES (?, ?)', [
+    const [result] = await conn.query('INSERT INTO orders (user_id, customer_name, total) VALUES (?, ?, ?)', [
+      req.user.id,
       customer_name ?? null,
       total,
     ]);
@@ -100,18 +110,29 @@ export async function createOrder(req, res) {
 export async function listOrders(req, res) {
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
-  const [rows] = await pool.query('SELECT * FROM orders ORDER BY id DESC LIMIT ? OFFSET ?', [
-    limit,
-    (page - 1) * limit,
-  ]);
-  const [[{ total }]] = await pool.query('SELECT COUNT(*) AS total FROM orders');
+  const owner = ownerFilter(req.user);
+  const whereSql = owner.sql ? `WHERE ${owner.sql}` : '';
+
+  const [rows] = await pool.query(
+    `SELECT o.*, u.name AS seller
+       FROM orders o
+       JOIN users u ON u.id = o.user_id
+       ${whereSql}
+       ORDER BY o.id DESC
+       LIMIT ? OFFSET ?`,
+    [...owner.params, limit, (page - 1) * limit]
+  );
+  const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM orders o ${whereSql}`, owner.params);
   res.json({ data: rows, page, limit, total });
 }
 
 export async function getOrder(req, res) {
   const id = idSchema.parse(req.params.id);
   const order = await findOrder(pool, id);
-  if (!order) throw new HttpError(404, 'Orden no encontrada');
+  // 404 también para órdenes ajenas, para no revelar que existen
+  if (!order || (req.user.role !== 'admin' && order.user_id !== req.user.id)) {
+    throw new HttpError(404, 'Orden no encontrada');
+  }
   res.json(order);
 }
 

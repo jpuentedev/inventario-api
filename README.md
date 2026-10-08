@@ -6,36 +6,64 @@ API REST para gestionar inventario y ventas, construida con **Node.js**, **Expre
 
 - Node.js 20+ y Express
 - MySQL 8 (driver `mysql2` con pool de conexiones)
+- JWT (`jsonwebtoken`) y `bcryptjs` para autenticación
 - Zod para validar datos de entrada
 
 ## Instalación
 
-> Si ya tenías la base creada de una versión anterior, vuelve a correr `npm run db:init` para agregar las tablas de órdenes.
-
 ```bash
 npm install
-cp .env.example .env   # edita tus credenciales de MySQL
-npm run db:init        # crea la base de datos, las tablas y los datos de ejemplo
+cp .env.example .env   # credenciales de MySQL, JWT_SECRET y datos del primer admin
+npm run db:init        # crea la base de datos, las tablas, datos de ejemplo y el admin
 npm run dev
 ```
 
+> Si cambia el esquema, `npm run db:reset` borra la base y la vuelve a crear.
+
+## Autenticación y roles
+
+Todas las rutas bajo `/api` (excepto el login) requieren el header `Authorization: Bearer <token>`.
+
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@inventario.local","password":"<ADMIN_PASSWORD>"}'
+```
+
+| Acción | admin | seller |
+| --- | --- | --- |
+| Consultar productos y categorías | ✓ | ✓ |
+| Crear, editar y borrar productos y categorías | ✓ | — |
+| Registrar ventas | ✓ | ✓ |
+| Ver órdenes | todas | solo las suyas |
+| Cancelar ventas | ✓ | — |
+| Dar de alta usuarios | ✓ | — |
+
+- Las contraseñas se guardan con hash bcrypt; no hay registro público: solo un admin crea usuarios.
+- El login responde igual (y tarda lo mismo) si el correo no existe o la contraseña es incorrecta, para no revelar qué cuentas existen.
+- Un vendedor recibe 404 al pedir una orden ajena, así no puede saber si existe.
+
 ## Endpoints
 
-| Método | Ruta | Descripción |
-| --- | --- | --- |
-| GET | `/health` | Estado de la API |
-| GET | `/api/products?search=&category_id=&page=&limit=` | Lista productos con búsqueda y paginación |
-| GET | `/api/products/:id` | Detalle de un producto |
-| POST | `/api/products` | Crea un producto |
-| PATCH | `/api/products/:id` | Actualiza un producto |
-| DELETE | `/api/products/:id` | Elimina un producto |
-| GET | `/api/categories` | Lista categorías |
-| POST | `/api/categories` | Crea una categoría |
-| DELETE | `/api/categories/:id` | Elimina una categoría |
-| GET | `/api/orders?page=&limit=` | Lista órdenes de venta |
-| GET | `/api/orders/:id` | Detalle de una orden con sus productos |
-| POST | `/api/orders` | Registra una venta y descuenta el stock |
-| POST | `/api/orders/:id/cancel` | Cancela una venta y devuelve el stock |
+| Método | Ruta | Rol | Descripción |
+| --- | --- | --- | --- |
+| GET | `/health` | público | Estado de la API |
+| POST | `/api/auth/login` | público | Inicia sesión y devuelve un JWT |
+| GET | `/api/auth/me` | cualquiera | Datos del usuario autenticado |
+| GET | `/api/auth/users` | admin | Lista usuarios |
+| POST | `/api/auth/users` | admin | Crea un usuario (admin o seller) |
+| GET | `/api/products?search=&category_id=&page=&limit=` | cualquiera | Lista productos con búsqueda y paginación |
+| GET | `/api/products/:id` | cualquiera | Detalle de un producto |
+| POST | `/api/products` | admin | Crea un producto |
+| PATCH | `/api/products/:id` | admin | Actualiza un producto |
+| DELETE | `/api/products/:id` | admin | Elimina un producto |
+| GET | `/api/categories` | cualquiera | Lista categorías |
+| POST | `/api/categories` | admin | Crea una categoría |
+| DELETE | `/api/categories/:id` | admin | Elimina una categoría |
+| GET | `/api/orders?page=&limit=` | cualquiera | Lista órdenes (el vendedor solo ve las suyas) |
+| GET | `/api/orders/:id` | cualquiera | Detalle de una orden con sus productos |
+| POST | `/api/orders` | cualquiera | Registra una venta y descuenta el stock |
+| POST | `/api/orders/:id/cancel` | admin | Cancela una venta y devuelve el stock |
 
 ## Órdenes de venta y concurrencia
 
@@ -48,20 +76,12 @@ Si un solo producto no alcanza, se hace rollback y nada cambia.
 - Cancelar una orden devuelve el stock en la misma transacción.
 - Prueba: 20 ventas simultáneas de un producto con stock 12 → 12 aceptadas (201), 8 rechazadas (409), stock final 0, nunca negativo.
 
-Ejemplo:
-
-```bash
-curl -X POST http://localhost:3000/api/products \
-  -H "Content-Type: application/json" \
-  -d '{"sku":"ELEC-003","name":"Audífonos","price":399.9,"stock":20,"category_id":1}'
-```
-
 ## Roadmap
 
 - [x] CRUD de productos y categorías
 - [x] Órdenes de venta con transacciones (descuento de stock atómico)
+- [x] Autenticación con JWT y roles (admin / vendedor)
 - [ ] Historial de movimientos de inventario
-- [ ] Autenticación con JWT y roles (admin / vendedor)
 - [ ] Reportes: productos más vendidos, stock bajo
 - [ ] Pruebas automatizadas (Jest + Supertest)
 - [ ] Docker y despliegue

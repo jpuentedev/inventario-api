@@ -7,13 +7,16 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "db:init": "node db/init.js"
+    "db:init": "node db/init.js",
+    "db:reset": "node db/init.js --reset"
   },
   "author": "José Julián Puente Reyes",
   "license": "MIT",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.11.5",
     "zod": "^3.24.1"
   }

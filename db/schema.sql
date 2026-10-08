@@ -21,13 +21,24 @@ CREATE TABLE IF NOT EXISTS products (
   FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS users (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  name          VARCHAR(150) NOT NULL,
+  email         VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(100) NOT NULL,
+  role          ENUM('admin', 'seller') NOT NULL DEFAULT 'seller',
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS orders (
   id            INT AUTO_INCREMENT PRIMARY KEY,
+  user_id       INT           NOT NULL,
   customer_name VARCHAR(150),
   total         DECIMAL(12,2) NOT NULL,
   status        ENUM('completed', 'cancelled') NOT NULL DEFAULT 'completed',
   created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  cancelled_at  TIMESTAMP NULL
+  cancelled_at  TIMESTAMP NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
 );
 
 -- Se guarda el precio al momento de la venta para que cambios futuros no alteren órdenes pasadas
