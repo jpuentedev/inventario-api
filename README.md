@@ -8,6 +8,16 @@ API REST para gestionar inventario y ventas, construida con **Node.js**, **Expre
 — documentación interactiva en Swagger. Desplegada en Render (Docker) con MySQL 8 en Aiven.
 Al ser plan gratuito, la primera visita después de un rato sin uso puede tardar ~1 minuto en despertar.
 
+Para probarla hay una cuenta de vendedor de demostración: inicia sesión en `POST /api/auth/login`
+y pega el token en **Authorize**.
+
+| Correo | Contraseña | Rol |
+| --- | --- | --- |
+| `demo@inventario.dev` | `demo-ventas-2026` | seller |
+
+Con ella puedes consultar productos y categorías, registrar ventas y ver tus propias órdenes;
+las acciones de administrador responden 403.
+
 ## Tecnologías
 
 - Node.js 20+ y Express
