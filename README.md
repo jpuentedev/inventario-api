@@ -121,6 +121,7 @@ Si un solo producto no alcanza, se hace rollback y nada cambia.
 - [x] CRUD de productos y categorías
 - [x] Órdenes de venta con transacciones (descuento de stock atómico)
 - [x] Autenticación con JWT y roles (admin / vendedor)
+- [x] Documentación interactiva con OpenAPI / Swagger
 - [ ] Historial de movimientos de inventario
 - [ ] Reportes: productos más vendidos, stock bajo
 - [x] Pruebas automatizadas (Jest + Supertest) con CI en GitHub Actions
