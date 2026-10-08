@@ -1,0 +1,20 @@
+{
+  "name": "inventario-api",
+  "version": "0.1.0",
+  "description": "API REST de inventario y ventas con Node.js, Express y MySQL",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:init": "node db/init.js"
+  },
+  "author": "José Julián Puente Reyes",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "mysql2": "^3.11.5",
+    "zod": "^3.24.1"
+  }
+}
