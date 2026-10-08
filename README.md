@@ -4,6 +4,10 @@
 
 API REST para gestionar inventario y ventas, construida con **Node.js**, **Express** y **MySQL**.
 
+**Demo en vivo:** [inventario-api-f1ys.onrender.com/docs](https://inventario-api-f1ys.onrender.com/docs)
+— documentación interactiva en Swagger. Desplegada en Render (Docker) con MySQL 8 en Aiven.
+Al ser plan gratuito, la primera visita después de un rato sin uso puede tardar ~1 minuto en despertar.
+
 ## Tecnologías
 
 - Node.js 20+ y Express
@@ -149,4 +153,4 @@ Si un solo producto no alcanza, se hace rollback y nada cambia.
 - [ ] Historial de movimientos de inventario
 - [ ] Reportes: productos más vendidos, stock bajo
 - [x] Pruebas automatizadas (Jest + Supertest) con CI en GitHub Actions
-- [ ] Docker y despliegue
+- [x] Docker y despliegue (Render + Aiven)
