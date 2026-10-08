@@ -1,11 +1,9 @@
 import mysql from 'mysql2/promise';
+import { connectionConfig } from './db-config.js';
 
 // Pool de conexiones: reutiliza conexiones en lugar de abrir una por petición
 export const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  ...connectionConfig(),
   database: process.env.DB_NAME,
   connectionLimit: 10,
   decimalNumbers: true,

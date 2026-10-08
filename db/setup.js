@@ -3,19 +3,14 @@
 import { readFile } from 'node:fs/promises';
 import bcrypt from 'bcryptjs';
 import mysql from 'mysql2/promise';
+import { connectionConfig } from '../src/db-config.js';
 
 export async function setupDatabase({ reset = false, log = console.log } = {}) {
   const { DB_NAME, ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
   if (!/^\w+$/.test(DB_NAME || '')) throw new Error('DB_NAME inválido o vacío');
 
   const sql = await readFile(new URL('./schema.sql', import.meta.url), 'utf8');
-  const conn = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    multipleStatements: true,
-  });
+  const conn = await mysql.createConnection({ ...connectionConfig(), multipleStatements: true });
 
   try {
     if (reset) {

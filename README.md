@@ -24,6 +24,30 @@ npm run dev
 
 > Si cambia el esquema, `npm run db:reset` borra la base y la vuelve a crear.
 
+## Docker
+
+```bash
+# Requiere JWT_SECRET y ADMIN_PASSWORD en .env
+docker compose up --build
+```
+
+Levanta la API y un MySQL 8.4 con volumen persistente; al arrancar, la API crea las tablas y el
+primer admin si faltan. La imagen usa `node:24-alpine`, solo dependencias de producción, corre
+con un usuario sin privilegios y tiene healthcheck. En CI se construye y se prueba en cada push.
+
+## Despliegue gratuito (Render + Aiven)
+
+- **API:** Render, plan Free, desde el `Dockerfile` (definido en [`render.yaml`](render.yaml)).
+- **Base de datos:** MySQL 8 en Aiven, plan Free. La conexión va cifrada: el certificado CA de
+  Aiven se pasa en `DB_SSL_CA`.
+
+1. En Aiven, crea un servicio MySQL Free y copia host, puerto, usuario, contraseña y el CA certificate.
+2. En Render: **New → Blueprint**, elige este repo y llena las variables que pide.
+3. Render construye la imagen y la publica; el primer arranque crea las tablas y el admin.
+
+> En el plan gratuito de Render el servicio se duerme tras 15 minutos sin tráfico:
+> la primera petición puede tardar cerca de un minuto en responder.
+
 ## Documentación interactiva (Swagger)
 
 Con el servidor corriendo, abre **http://localhost:3000/docs**.
