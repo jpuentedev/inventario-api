@@ -39,3 +39,46 @@ jobs:
       - run: npm ci
 
       - run: npm test -- --coverage
+
+  # Construye la imagen, levanta API + MySQL con Docker Compose y prueba el flujo principal
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: secreto-de-ci
+      ADMIN_EMAIL: admin@ci.local
+      ADMIN_PASSWORD: admin-ci-123
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Levantar contenedores
+        run: docker compose up -d --build --wait --wait-timeout 180
+
+      - name: Smoke test
+        run: |
+          set -e
+          curl -fsS http://localhost:3000/health
+          curl -fsS http://localhost:3000/docs.json > /dev/null
+          TOKEN=$(curl -fsS -X POST http://localhost:3000/api/auth/login \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}" | jq -r .token)
+          curl -fsS http://localhost:3000/api/products -H "Authorization: Bearer $TOKEN" | jq -e '.total == 3'
+          curl -fsS -X POST http://localhost:3000/api/orders \
+            -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+            -d '{"items":[{"product_id":1,"quantity":2}]}' | jq -e '.total == 499.8'
+
+      - name: El contenedor no corre como root
+        run: test "$(docker compose exec -T api whoami)" = "node"
+
+      - name: Reinicio conserva los datos
+        run: |
+          docker compose restart api
+          docker compose up -d --wait
+          TOKEN=$(curl -fsS -X POST http://localhost:3000/api/auth/login \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}" | jq -r .token)
+          curl -fsS http://localhost:3000/api/orders -H "Authorization: Bearer $TOKEN" | jq -e '.total == 1'
+
+      - name: Logs si algo falla
+        if: failure()
+        run: docker compose logs
