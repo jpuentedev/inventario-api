@@ -13,10 +13,19 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFiles": ["<rootDir>/tests/setup-env.js"],
-    "setupFilesAfterEnv": ["<rootDir>/tests/teardown.js"],
-    "testMatch": ["<rootDir>/tests/**/*.test.js"],
-    "collectCoverageFrom": ["src/**/*.js", "!src/server.js"],
+    "setupFiles": [
+      "<rootDir>/tests/setup-env.js"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/teardown.js"
+    ],
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js"
+    ],
     "transform": {}
   },
   "author": "José Julián Puente Reyes",
@@ -27,6 +36,7 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.11.5",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {

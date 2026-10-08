@@ -11,6 +11,7 @@ API REST para gestionar inventario y ventas, construida con **Node.js**, **Expre
 - JWT (`jsonwebtoken`) y `bcryptjs` para autenticación
 - Zod para validar datos de entrada
 - Jest + Supertest para pruebas de integración, en CI con GitHub Actions
+- OpenAPI 3 + Swagger UI para documentación interactiva
 
 ## Instalación
 
@@ -23,10 +24,22 @@ npm run dev
 
 > Si cambia el esquema, `npm run db:reset` borra la base y la vuelve a crear.
 
+## Documentación interactiva (Swagger)
+
+Con el servidor corriendo, abre **http://localhost:3000/docs**.
+
+1. Ejecuta `POST /api/auth/login` con **Try it out** y copia el `token` de la respuesta.
+2. Pulsa **Authorize**, pega el token y confirma.
+3. Prueba cualquier endpoint desde el navegador; el token se conserva al recargar.
+
+La especificación OpenAPI 3 está en [`src/docs/openapi.js`](src/docs/openapi.js) y en crudo en `/docs.json`
+(sirve para importarla en Postman o Insomnia). Una prueba automatizada compara las rutas de Express
+con la especificación, así ningún endpoint queda sin documentar.
+
 ## Pruebas
 
 ```bash
-npm test               # 52 pruebas de integración
+npm test               # 56 pruebas de integración
 npm test -- --coverage # con reporte de cobertura
 ```
 
@@ -39,6 +52,7 @@ Toman las credenciales de MySQL de `.env`.
 | `tests/auth.test.js` | Login, tokens inválidos, expirados o con otro secreto, gestión de usuarios y permisos |
 | `tests/products.test.js` | Listado, búsqueda, paginación, CRUD, validaciones, categorías y permisos del vendedor |
 | `tests/orders.test.js` | Ventas, rollback por stock insuficiente, precio histórico, cancelación, visibilidad por rol y concurrencia |
+| `tests/docs.test.js` | Swagger UI responde, la especificación es OpenAPI 3 y documenta exactamente las rutas de Express |
 
 Las pruebas de concurrencia lanzan 20 ventas simultáneas sobre 12 unidades (se aceptan exactamente 12)
 y ventas cruzadas en orden inverso para comprobar que no hay deadlocks.
