@@ -29,6 +29,9 @@ export function errorHandler(err, req, res, next) {
   if (err.code === 'ER_NO_REFERENCED_ROW_2') {
     return res.status(400).json({ error: 'La categoría no existe' });
   }
+  if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+    return res.status(409).json({ error: 'No se puede eliminar: tiene ventas registradas' });
+  }
   console.error(err);
   res.status(500).json({ error: 'Error interno del servidor' });
 }

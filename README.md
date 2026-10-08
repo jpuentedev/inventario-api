@@ -10,6 +10,8 @@ API REST para gestionar inventario y ventas, construida con **Node.js**, **Expre
 
 ## Instalación
 
+> Si ya tenías la base creada de una versión anterior, vuelve a correr `npm run db:init` para agregar las tablas de órdenes.
+
 ```bash
 npm install
 cp .env.example .env   # edita tus credenciales de MySQL
@@ -30,6 +32,21 @@ npm run dev
 | GET | `/api/categories` | Lista categorías |
 | POST | `/api/categories` | Crea una categoría |
 | DELETE | `/api/categories/:id` | Elimina una categoría |
+| GET | `/api/orders?page=&limit=` | Lista órdenes de venta |
+| GET | `/api/orders/:id` | Detalle de una orden con sus productos |
+| POST | `/api/orders` | Registra una venta y descuenta el stock |
+| POST | `/api/orders/:id/cancel` | Cancela una venta y devuelve el stock |
+
+## Órdenes de venta y concurrencia
+
+Cada venta se procesa en una **transacción**: se bloquean las filas de los productos con
+`SELECT ... FOR UPDATE`, se valida el stock de todos, se descuenta y se guarda la orden.
+Si un solo producto no alcanza, se hace rollback y nada cambia.
+
+- Las filas se bloquean siempre en el mismo orden (por id) para evitar deadlocks.
+- Cada línea guarda el precio al momento de la venta, así un cambio de precio no altera órdenes pasadas.
+- Cancelar una orden devuelve el stock en la misma transacción.
+- Prueba: 20 ventas simultáneas de un producto con stock 12 → 12 aceptadas (201), 8 rechazadas (409), stock final 0, nunca negativo.
 
 Ejemplo:
 
@@ -42,7 +59,7 @@ curl -X POST http://localhost:3000/api/products \
 ## Roadmap
 
 - [x] CRUD de productos y categorías
-- [ ] Órdenes de venta con transacciones (descuento de stock atómico)
+- [x] Órdenes de venta con transacciones (descuento de stock atómico)
 - [ ] Historial de movimientos de inventario
 - [ ] Autenticación con JWT y roles (admin / vendedor)
 - [ ] Reportes: productos más vendidos, stock bajo
